@@ -1,5 +1,6 @@
 package com.game.repository;
 
+import com.game.config.MySessionFactory;
 import com.game.entity.Player;
 import com.mysql.cj.Session;
 import com.mysql.cj.xdevapi.SessionFactory;
@@ -14,7 +15,7 @@ import java.util.Queue;
 @Repository(value = "db")
 public class PlayerRepositoryDB implements IPlayerRepository {
 
-    private final SessionFactory sessionFactory;
+    private final MySessionFactory sessionFactory;
 
     public PlayerRepositoryDB(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -22,7 +23,7 @@ public class PlayerRepositoryDB implements IPlayerRepository {
 
     @Override
     public List<Player> getAll(int pageNumber, int pageSize) {
-        String sql = " from players";
+        String sql = "from players";
 
 
         return null;
