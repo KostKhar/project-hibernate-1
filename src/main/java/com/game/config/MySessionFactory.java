@@ -1,14 +1,25 @@
 package com.game.config;
 
-import com.mysql.cj.xdevapi.SessionFactory;
+import com.game.entity.Player;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
-import java.lang.module.Configuration;
-import java.util.Properties;
+public class MySessionFactory {
 
-public class MySessionFactory extends SessionFactory {
-private SessionFactory sessionFactory;
+    private static SessionFactory sessionFactory;
 
-    public MySessionFactory(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
+    private MySessionFactory() {}
+
+    public static SessionFactory getSessionFactory() {
+        if (sessionFactory == null) {
+            try {
+                SessionFactory sessionFactory  = new Configuration().configure()
+                .addAnnotatedClass(Player.class).buildSessionFactory();
+                return sessionFactory;
+            } catch (Exception e) {
+                System.out.println("Исключение!" + e);
+            }
+        }
+        return sessionFactory;
     }
 }

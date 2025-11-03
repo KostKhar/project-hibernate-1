@@ -6,6 +6,9 @@ import java.util.Date;
 
 @Entity
 @Table(name = "player")
+@NamedQueries({
+        @NamedQuery(name = "player.findAll", query = "SELECT count(*) FROM player"),
+})
 public class Player {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

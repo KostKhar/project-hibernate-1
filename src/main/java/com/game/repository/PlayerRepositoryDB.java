@@ -1,37 +1,50 @@
 package com.game.repository;
 
-import com.game.config.MySessionFactory;
 import com.game.entity.Player;
-import com.mysql.cj.Session;
-import com.mysql.cj.xdevapi.SessionFactory;
+import jakarta.annotation.PreDestroy;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.NativeQuery;
+import org.hibernate.query.Query;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.PreDestroy;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
+
+import static com.game.config.MySessionFactory.getSessionFactory;
 
 @Repository(value = "db")
 public class PlayerRepositoryDB implements IPlayerRepository {
+    private final static Logger logger = LoggerFactory.getLogger(PlayerRepositoryDB.class);
+    private SessionFactory sessionFactory;
 
-    private final MySessionFactory sessionFactory;
-
-    public PlayerRepositoryDB(SessionFactory sessionFactory) {
-        this.sessionFactory = sessionFactory;
-    }
 
     @Override
     public List<Player> getAll(int pageNumber, int pageSize) {
-        String sql = "from players";
+        String sql = "FROM players";
+        int offset = (pageNumber - 1) * pageSize;
+        int limit = pageSize;
 
+        try(Session Session = getSessionFactory().openSession()){
+            NativeQuery<Player> query = Session.createNativeQuery(sql);
+            query.setFirstResult(offset);
+            query.setMaxResults(limit);
+            return query.list();
+        } catch(Exception e){
+            logger.error(e.getMessage());
 
-        return null;
+        }
+        throw new RuntimeException("Check data and retry");
     }
 
     @Override
     public int getAllCount() {
-        return 0;
+        try(Session Session = getSessionFactory().openSession()){
+            Query<Player> query = Session.createNamedQuery("player.findAll");
+            return query.list().size();
+        }
     }
 
     @Override
@@ -49,6 +62,10 @@ public class PlayerRepositoryDB implements IPlayerRepository {
         return Optional.empty();
     }
 
+    public PlayerRepositoryDB() {
+        this.sessionFactory = getSessionFactory();
+    }
+
     @Override
     public void delete(Player player) {
 
@@ -56,6 +73,6 @@ public class PlayerRepositoryDB implements IPlayerRepository {
 
     @PreDestroy
     public void beforeStop() {
-
+        sessionFactory.close();
     }
 }
