@@ -1,13 +1,21 @@
 package com.game.entity;
 
 import jakarta.persistence.*;
+import lombok.Data;
+import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 
 @Entity
-@Table(name = "player")
+@Data
+@ToString
+@Table(name = "player", schema = "rpg")
 @NamedQueries({
-        @NamedQuery(name = "player.findAll", query = "SELECT count(*) FROM player"),
+        @NamedQuery(name = "player.getCount", query = "SELECT count(p) FROM Player p"),
+        @NamedQuery(name = "player.findById", query = "SELECT p FROM Player p WHERE p.id = :id")
 })
 public class Player {
     @Id
@@ -16,22 +24,38 @@ public class Player {
 
     @Column(name = "name", unique = true, nullable = false, length = 12)
     private String name;
-    @Column(name ="title",  nullable = false, length = 30)
+    @Column(name = "title", nullable = false, length = 30)
     private String title;
-    @Column(name ="race",  nullable = false)
+    @Column(name = "race", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private Race race;
-    @Column(name ="profession",  nullable = false)
+    @Column(name = "profession", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private Profession profession;
-    @Column(name ="birthday", nullable = false)
+    @DateTimeFormat
+    @Column(name = "birthday", nullable = false)
     private Date birthday;
-    @Column(name ="banned" , nullable = false)
+    @Column(name = "banned", nullable = false)
     private Boolean banned;
-    @Column(name ="level" , nullable = false)
+    @Column(name = "level", nullable = false)
     private Integer level;
 
+    @CreationTimestamp
+    private Date created;
+    @UpdateTimestamp
+    private Date updated;
+
     public Player() {
+    }
+
+    public Player(String name, String title, Race race, Profession profession, Date birthday, Boolean banned, Integer level) {
+        this.name = name;
+        this.title = title;
+        this.race = race;
+        this.profession = profession;
+        this.birthday = birthday;
+        this.banned = banned;
+        this.level = level;
     }
 
     public Player(Long id, String name, String title, Race race, Profession profession, Date birthday, Boolean banned, Integer level) {
