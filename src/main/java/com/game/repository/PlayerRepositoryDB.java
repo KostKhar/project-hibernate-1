@@ -3,12 +3,9 @@ package com.game.repository;
 import com.game.config.AppConfig;
 import com.game.entity.Player;
 import jakarta.annotation.PreDestroy;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.NamedQuery;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.query.Query;
 import org.slf4j.Logger;
@@ -18,7 +15,6 @@ import org.springframework.stereotype.Repository;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
-
 
 
 @Repository(value = "db")
@@ -35,20 +31,23 @@ public class PlayerRepositoryDB implements IPlayerRepository {
         }
     }
 
-
     @Override
     public List<Player> getAll(int pageNumber, int pageSize) {
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 10;
+
         int offset = (pageNumber - 1) * pageSize;
 
         try (Session session = sessionFactory.openSession()) {
-            NativeQuery<Player> query = session.createNativeQuery(
-                    "SELECT * FROM rpg.player", Player.class);
+            Query<Player> query = session.createQuery(
+                    "FROM Player p ORDER BY p.id DESC", Player.class);
             query.setFirstResult(offset);
             query.setMaxResults(pageSize);
             return query.list();
 
         } catch (Exception ex) {
-            log.error("Error in getAll method", ex);
+            log.error("Error in getAll method with pageNumber: {}, pageSize: {}",
+                    pageNumber, pageSize, ex);
             throw new IllegalArgumentException("getAll player failed: " + ex.getMessage(), ex);
         }
     }
@@ -59,67 +58,86 @@ public class PlayerRepositoryDB implements IPlayerRepository {
             Query<Long> query = session.createNamedQuery("player.getCount", Long.class);
             Long count = query.uniqueResult();
             return count.intValue();
-        }catch(Exception ex) {
+        } catch (Exception ex) {
             log.error(ex.getMessage());
         }
         log.error("getAllCount player failed");
-        throw  new IllegalArgumentException("getAllCount player failed");
+        throw new IllegalArgumentException("getAllCount player failed");
     }
 
     @Override
     public Player save(Player player) {
-        Session session = sessionFactory.openSession();
         Transaction transaction = null;
-        try {
+        try (Session session = sessionFactory.openSession()) {
+            Player existingPlayer = session
+                    .createQuery("FROM Player WHERE name = :name", Player.class)
+                    .setParameter("name", player.getName())
+                    .uniqueResult();
+
             transaction = session.beginTransaction();
-            session.save(player);
-            transaction.commit();
-            return player;
-        }catch(Exception ex) {
-            log.error(ex.getMessage());
+
+            if (existingPlayer != null) {
+                log.info("Player with name '" + player.getName() + "' already exists, updating...");
+                existingPlayer.setTitle(player.getTitle());
+                existingPlayer.setRace(player.getRace());
+                existingPlayer.setProfession(player.getProfession());
+                existingPlayer.setBirthday(player.getBirthday());
+                existingPlayer.setBanned(player.getBanned());
+                existingPlayer.setLevel(player.getLevel());
+                session.merge(existingPlayer);
+                transaction.commit();
+                return existingPlayer;
+            } else {
+                session.save(player);
+                transaction.commit();
+                log.info("Player '" + player.getName() + "' saved successfully.");
+                return player;
+            }
+        } catch (Exception ex) {
+            if (transaction != null) transaction.rollback();
+            log.error("Error saving player: " + ex.getMessage(), ex);
+            throw ex;
         }
-        log.error("Save player failed");
-        throw  new IllegalArgumentException("Save player failed");
     }
+
 
     @Override
     public Player update(Player player) {
-        try(Session session = sessionFactory.openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
+
             session.update(player);
             transaction.commit();
             return player;
-        }catch(Exception ex) {
+        } catch (Exception ex) {
             log.error(ex.getMessage());
         }
         log.error("Update player failed");
-        throw  new IllegalArgumentException("Update player failed");
+        throw new IllegalArgumentException("Update player failed");
     }
 
     @Override
     public Optional<Player> findById(long id) {
-        try(Session session = sessionFactory.openSession()) {
+        try (Session session = sessionFactory.openSession()) {
             Query<Player> query = session.createNamedQuery("player.findById", Player.class);
             query.setParameter("id", id);
             return query.uniqueResultOptional();
-        }catch(Exception ex) {
+        } catch (Exception ex) {
             log.error(ex.getMessage());
         }
         log.error("Find By id  player failed");
-        throw  new IllegalArgumentException("Find By id player failed");
+        throw new IllegalArgumentException("Find By id player failed");
     }
 
     @Override
     public void delete(Player player) {
-        Session session = sessionFactory.openSession();
         Transaction transaction = null;
+        try (Session session = sessionFactory.openSession()) {
 
-        try {
             transaction = session.beginTransaction();
-
-            // Проверяем, существует ли игрок в базе
             Player existingPlayer = session.get(Player.class, player.getId());
             if (existingPlayer == null) {
+                log.info("Player with ID " + player.getId() + " not found");
                 throw new IllegalArgumentException("Player with ID " + player.getId() + " not found");
             }
 
