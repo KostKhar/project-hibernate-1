@@ -1,37 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="WARN">
-    <Properties>
-        <Property name="LOG_PATTERN">%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</Property>
-        <Property name="LOG_DIR">./logs</Property>
-    </Properties>
-
+<Configuration status="warn" name="Hippodrome">
     <Appenders>
-        <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
-        </Console>
-
-        <File name="FileAppender" fileName="${LOG_DIR}/application.log">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
-        </File>
-
-        <File name="HibernateAppender" fileName="${LOG_DIR}/hibernate.log">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
-        </File>
+        <RollingFile name="RollingFile"
+                     fileName="logs/rpg.log"
+                     filePattern="logs/rpg.%d{dd-MM-yyyy}.log">
+            <PatternLayout>
+                <pattern>%d{dd-MM-yyyy HH:mm:ss,SSS} %-5level %c{1}: %msg%n</pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="30">
+                <Delete basePath="logs/" maxDepth="2">
+                    <IfFileName glob="*/rpg-*.log" />
+                    <IfLastModified age="7d" />
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
     </Appenders>
 
     <Loggers>
-        <Logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
-            <AppenderRef ref="HibernateAppender"/>
-            <AppenderRef ref="Console"/>
+        <Logger name="com.example.rpg" level="debug" additivity="false">
+            <AppenderRef ref="RollingFile"/>
         </Logger>
 
-        <Logger name="org.hibernate.type.descriptor.sql" level="TRACE" additivity="false">
-            <AppenderRef ref="HibernateAppender"/>
-        </Logger>
-
-        <Root level="INFO">
-            <AppenderRef ref="FileAppender"/>
-            <AppenderRef ref="Console"/>
+        <Root level="debug">
+            <AppenderRef ref="RollingFile"/>
         </Root>
     </Loggers>
 </Configuration>
