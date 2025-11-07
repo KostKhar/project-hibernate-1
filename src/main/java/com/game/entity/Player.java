@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -35,6 +36,7 @@ public class Player {
     @DateTimeFormat
     @Column(name = "birthday", nullable = false)
     private Date birthday;
+//    @Type(type="Y_N")
     @Column(name = "banned", nullable = false)
     private Boolean banned;
     @Column(name = "level", nullable = false)
