@@ -39,8 +39,8 @@ public class PlayerRepositoryDB implements IPlayerRepository {
         int offset = (pageNumber - 1) * pageSize;
 
         try (Session session = sessionFactory.openSession()) {
-            Query<Player> query = session.createQuery(
-                    "FROM Player p ORDER BY p.id DESC", Player.class);
+            NativeQuery<Player> query = session.createNativeQuery(
+                    "Select * FROM rpg.Player p ORDER BY p.id DESC", Player.class);
             query.setFirstResult(offset);
             query.setMaxResults(pageSize);
             return query.list();

@@ -25,20 +25,25 @@ public class Player {
 
     @Column(name = "name", unique = true, nullable = false, length = 12)
     private String name;
+
     @Column(name = "title", nullable = false, length = 30)
     private String title;
+
     @Column(name = "race", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private Race race;
+
     @Column(name = "profession", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     private Profession profession;
+
     @DateTimeFormat
     @Column(name = "birthday", nullable = false)
     private Date birthday;
-//    @Type(type="Y_N")
+
     @Column(name = "banned", nullable = false)
     private Boolean banned;
+
     @Column(name = "level", nullable = false)
     private Integer level;
 
